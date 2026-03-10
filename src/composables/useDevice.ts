@@ -1,6 +1,7 @@
 import { invoke } from '@tauri-apps/api/core'
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow'
 import { cursorPosition } from '@tauri-apps/api/window'
+import { useDebounceFn } from '@vueuse/core'
 
 import { INVOKE_KEY, LISTEN_KEY } from '../constants'
 
@@ -39,6 +40,15 @@ export function useDevice() {
   const releaseTimers = new Map<string, NodeJS.Timeout>()
   const catStore = useCatStore()
   const { handlePress, handleRelease, handleMouseChange, handleMouseMove } = useModel()
+
+  // 热切换：键盘输入 → 切换到 keyboard 模型（300ms 防抖）
+  const debouncedSwitchToKeyboard = useDebounceFn(() => {
+    const keyboardModel = modelStore.getPresetModelByMode('keyboard')
+
+    if (keyboardModel) {
+      modelStore.currentModel = keyboardModel
+    }
+  }, 300)
 
   const startListening = () => {
     invoke(INVOKE_KEY.START_DEVICE_LISTENING)
@@ -104,6 +114,11 @@ export function useDevice() {
     const { kind, value } = payload
 
     if (kind === 'KeyboardPress' || kind === 'KeyboardRelease') {
+      // 热切换：检测到键盘输入且当前为 gamepad 模型时切换
+      if (kind === 'KeyboardPress' && catStore.model.autoSwitch && modelStore.currentModel?.mode === 'gamepad') {
+        debouncedSwitchToKeyboard()
+      }
+
       const nextValue = getSupportedKey(value)
 
       if (!nextValue) return

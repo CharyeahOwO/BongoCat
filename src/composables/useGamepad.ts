@@ -1,12 +1,14 @@
 import type { LiteralUnion } from 'ant-design-vue/es/_util/type'
 
 import { invoke } from '@tauri-apps/api/core'
+import { useDebounceFn } from '@vueuse/core'
 import { computed, reactive, watch } from 'vue'
 
 import { useModel } from './useModel'
 import { useTauriListen } from './useTauriListen'
 
 import { INVOKE_KEY, LISTEN_KEY } from '@/constants'
+import { useCatStore } from '@/stores/cat'
 import { useModelStore } from '@/stores/model'
 import live2d from '@/utils/live2d'
 
@@ -33,7 +35,8 @@ interface Sticks {
 const INITIAL_STICK_STATE: StickState = { x: 0, y: 0, moved: false, pressed: false }
 
 export function useGamepad() {
-  const { currentModel } = useModelStore()
+  const modelStore = useModelStore()
+  const catStore = useCatStore()
   const { handlePress, handleRelease, handleAxisChange } = useModel()
   const sticks = reactive<Sticks>({
     left: { ...INITIAL_STICK_STATE },
@@ -45,8 +48,17 @@ export function useGamepad() {
     right: sticks.right.moved || sticks.right.pressed,
   }))
 
-  watch(() => currentModel?.mode, (mode) => {
-    if (mode === 'gamepad') {
+  // 热切换：手柄输入 → 切换到 gamepad 模型（300ms 防抖）
+  const debouncedSwitchToGamepad = useDebounceFn(() => {
+    const gamepadModel = modelStore.getPresetModelByMode('gamepad')
+
+    if (gamepadModel) {
+      modelStore.currentModel = gamepadModel
+    }
+  }, 300)
+
+  watch(() => [modelStore.currentModel?.mode, catStore.model.autoSwitch], ([mode, autoSwitch]) => {
+    if (mode === 'gamepad' || autoSwitch) {
       return invoke(INVOKE_KEY.START_GAMEPAD_LISTING)
     }
 
@@ -67,6 +79,11 @@ export function useGamepad() {
 
   useTauriListen<GamepadEvent>(LISTEN_KEY.GAMEPAD_CHANGED, ({ payload }) => {
     const { name, value } = payload
+
+    // 热切换：检测到手柄输入且当前为 keyboard 模型时切换
+    if (catStore.model.autoSwitch && modelStore.currentModel?.mode === 'keyboard') {
+      debouncedSwitchToGamepad()
+    }
 
     switch (name) {
       case 'LeftStickX':

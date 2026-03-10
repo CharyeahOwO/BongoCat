@@ -21,6 +21,7 @@
           "windowRadius": "Window Radius",
           "opacity": "Opacity",
           "autoReleaseDelay": "Auto Release Delay",
+          "autoSwitch": "Auto Switch Input",
           "hideOnHover": "Hide on Hover",
           "position": "Window Position"
         },
@@ -32,6 +33,7 @@
           "alwaysOnTop": "When enabled, the window stays above all other windows.",
           "windowSize": "Move mouse to window edge, or hold Shift and right-drag to resize.",
           "autoReleaseDelay": "On Windows, some system keys cannot capture release events and will auto-release after timeout.",
+          "autoSwitch": "When enabled, the model will automatically switch based on the last used input device (keyboard or gamepad).",
           "hideOnHover": "When enabled, the window hides when mouse hovers over it.",
           "position": "Takes effect after the app starts, or when this parameter, window size, model, or screen resolution changes."
         },

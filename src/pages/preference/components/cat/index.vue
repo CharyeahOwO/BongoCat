@@ -45,6 +45,13 @@ const catStore = useCatStore()
         class="w-28"
       />
     </ProListItem>
+
+    <ProListItem
+      :description="$t('pages.preference.cat.hints.autoSwitch')"
+      :title="$t('pages.preference.cat.labels.autoSwitch')"
+    >
+      <Switch v-model:checked="catStore.model.autoSwitch" />
+    </ProListItem>
   </ProList>
 
   <ProList :title="$t('pages.preference.cat.labels.windowSettings')">

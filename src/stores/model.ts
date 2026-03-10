@@ -66,6 +66,10 @@ export const useModelStore = defineStore('model', () => {
     models.value = nextModels
   }
 
+  const getPresetModelByMode = (mode: ModelMode) => {
+    return find(models.value, { mode, isPreset: true })
+  }
+
   return {
     models,
     currentModel,
@@ -74,6 +78,7 @@ export const useModelStore = defineStore('model', () => {
     supportKeys,
     pressedKeys,
     init,
+    getPresetModelByMode,
   }
 }, {
   tauri: {
